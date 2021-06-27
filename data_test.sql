@@ -1,5 +1,5 @@
-DROP DATABASE IF EXISTS biztime;
-CREATE DATABASE biztime;
+DROP DATABASE IF EXISTS biztime_test;
+CREATE DATABASE biztime_test;
 
 \c biztime
 
