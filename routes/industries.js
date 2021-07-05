@@ -1,13 +1,24 @@
 const express = require("express");
-const slugify = require('slugify');
 const router = express.Router();
 const ExpressError = require("../expressError");
 const db = require('../db');
 
 router.get('/', async (req, res, next) => {
     try {
-        const results = await db.query(`SELECT code, name FROM companies ORDER BY name`);
-        return res.json({ companies: results.rows });
+        const results = await db.query(`
+        SELECT i.title, c.code FROM industries AS i
+        LEFT JOIN comp_industries as ci
+        ON i.code = ci.indust_code
+        LEFT JOIN companies AS c
+        ON c.code = ci.comp_code
+        ORDER BY title`);
+        
+        titles = results.rows;
+        return res.json({ 
+            industries:{
+                titles
+            }
+        });
     } catch (e) {
         return next(new ExpressError("Table not found", 404));
     };
@@ -19,10 +30,10 @@ router.get('/:code', async (req, res, next) => {
         const compResult = await db.query(`
             SELECT c.code, c.name, c.description, i.title
             FROM companies AS c 
-            LEFT JOIN comp_industries AS cp 
-            ON c.code = cp.comp_code
+            LEFT JOIN comp_industries AS ci 
+            ON c.code = ci.comp_code
             LEFT JOIN industries AS i
-            ON cp.indust_code = i.code
+            ON ci.indust_code = i.code
             WHERE c.code = $1;`, [req.params.code]);
         const invResult = await db.query(`SELECT id FROM invoices WHERE comp_code = $1`, [req.params.code]);
         if (compResult.rows.length === 0) {
@@ -34,6 +45,7 @@ router.get('/:code', async (req, res, next) => {
         const invoices = invResult.rows;
 
         return res.json({
+            company: {
                 "company": {
                     code,
                     name,
@@ -41,6 +53,7 @@ router.get('/:code', async (req, res, next) => {
                     invoices,
                     industries
                 }
+            }
         });
 
     } catch (e) {
@@ -51,8 +64,7 @@ router.get('/:code', async (req, res, next) => {
 
 router.post('/', async (req, res, next) => {
     try {
-        const { name, description } = req.body;
-        const code = slugify(name, {lower: true});
+        const { code, name, description } = req.body;
         if (!code || !name || !description) {
             throw new ExpressError("Missing required data", 400);
         };

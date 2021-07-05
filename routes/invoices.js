@@ -5,7 +5,7 @@ const db = require('../db');
 
 router.get('/', async (req, res, next) => {
     try {
-        const results = await db.query(`SELECT id, comp_code, amt, paid, add_date, paid_date FROM invoices`);
+        const results = await db.query(`SELECT id, comp_code, amt, paid FROM invoices`);
         return res.json({ invoices: results.rows });
     } catch (e) {
         return next(new ExpressError("Table not found", 404));
@@ -52,7 +52,7 @@ router.get('/:id', async (req, res, next) => {
 router.post('/', async (req, res, next) => {
     try {
         const { comp_code, amt } = req.body;
-        if (!comp_code || !amt || !paid || !add_date || !paid_date) {
+        if (!comp_code || !amt ) {
             throw new ExpressError("Missing required data", 400);
         };
         const results = await db.query(
@@ -68,7 +68,7 @@ router.put('/:id', async (req, res, next) => {
     try {
         const { id } = req.params;
         const { amt, paid } = req.body;
-        if (!amt || !paid) {
+        if (!amt ) {
             throw new ExpressError("Missing required data", 400);
         };
         const currResults = await db.query(`SELECT paid FROM invoices WHERE id = $1`, [id]);
