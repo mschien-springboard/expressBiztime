@@ -1,22 +1,25 @@
 const express = require("express");
+const slugify = require('slugify');
 const router = express.Router();
 const ExpressError = require("../expressError");
 const db = require('../db');
 
 router.get('/', async (req, res, next) => {
     try {
-        const results = await db.query(`
+        const indResults = await db.query(`
         SELECT i.title, c.code FROM industries AS i
         LEFT JOIN comp_industries as ci
         ON i.code = ci.indust_code
         LEFT JOIN companies AS c
         ON c.code = ci.comp_code
-        ORDER BY title`);
-        
-        titles = results.rows;
-        return res.json({ 
-            industries:{
-                titles
+        `);
+
+        // const { title, code} = 
+        industries = results.rows;
+        console.log(results.rows);
+        return res.json({
+            industries: {
+
             }
         });
     } catch (e) {
@@ -62,52 +65,54 @@ router.get('/:code', async (req, res, next) => {
 });
 
 
-// router.post('/', async (req, res, next) => {
-//     try {
-//         const { code, name, description } = req.body;
-//         if (!code || !name || !description) {
-//             throw new ExpressError("Missing required data", 400);
-//         };
-//         const results = await db.query(
-//             `INSERT INTO companies (code, name, description) 
-//         VALUES ($1, $2, $3) 
-//         RETURNING code, name, description`, [code, name, description]);
-//         return res.status(201).json({ company: results.rows[0] });
-//     } catch (e) {
-//         return next(e);
-//     };
-// });
+router.post('/', async (req, res, next) => {
+    try {
+        const { title } = req.body;
+        const matches = title.match(/\b(\w)/g).join('');
+        const slugCode = slugify(matches, { lower: true });
+        if (!slugCode || !title) {
+            throw new ExpressError("Missing required data", 400);
+        };
+        const results = await db.query(
+            `INSERT INTO industries (code, title) 
+        VALUES ($1, $2) 
+        RETURNING code, title`, [slugCode, title]);
+        return res.status(201).json({ Industry: results.rows[0] });
+    } catch (e) {
+        return next(e);
+    };
+});
 
-// router.put('/:code', async (req, res, next) => {
-//     try {
-//         const { code } = req.params;
-//         const { name, description } = req.body;
-//         if (!name || !description) {
-//             throw new ExpressError("Missing required data", 400);
-//         };
-//         const results = await db.query(
-//             `UPDATE companies SET code=$1, name=$2, description=$3 
-//             WHERE code=$1 RETURNING code, name, description`, [code, name, description]);
-//         if (results.rows.length === 0) {
-//             throw new ExpressError(`Company Code: ${code} not found`, 404);
-//         };
-//         return res.send({ company: results.rows[0] });
-//     } catch (e) {
-//         return next(e);
-//     };
-// });
+router.put('/:code', async (req, res, next) => {
+    try {
+        const { title } = req.body;
+        const { code } = req.params;
+        if (!code || !title) {
+            throw new ExpressError("Missing required data", 400);
+        };
+        const results = await db.query(
+            `UPDATE industries SET code=$1, title=$2 
+            WHERE code=$1 RETURNING code, title`, [code, title]);
+        if (results.rows.length === 0) {
+            throw new ExpressError(`Industry Code: ${code} not found`, 404);
+        };
+        return res.status(201).json({ Industry: results.rows[0] });
+    } catch (e) {
+        return next(e);
+    };
+});
 
-// router.delete('/:code', async (req, res, next) => {
-//     try {
-//         const { code } = req.params;
-//         const results = await db.query(`DELETE FROM companies WHERE code=$1 RETURNING code`, [code]);
-//         if (results.rowCount === 0) {
-//             throw new ExpressError(`Company Code: ${code} not found`, 404);
-//         };
-//         return res.send({ msg: `Deleted Company: ${code}` });
-//     } catch (e) {
-//         return next(e);
-//     };
-// });
+router.delete('/:code', async (req, res, next) => {
+    try {
+        const { code } = req.params;
+        const results = await db.query(`DELETE FROM industries WHERE code=$1 RETURNING code`, [code]);
+        if (results.rowCount === 0) {
+            throw new ExpressError(`Industry Code: ${code} not found`, 404);
+        };
+        return res.send({ msg: `Deleted Industry: ${code}` });
+    } catch (e) {
+        return next(e);
+    };
+});
 
 module.exports = router;

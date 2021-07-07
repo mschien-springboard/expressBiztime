@@ -1,73 +1,83 @@
-// /** Tests for invoices. */
+/** Tests for companies. */
 
-// const request = require("supertest");
+const request = require("supertest");
 
-// const app = require("../app");
-// const { createData } = require("../_test-common");
-// const db = require("../db");
+const app = require("../app");
+const { createData } = require("../_test-common");
+const db = require("../db");
 
-// // before each test, clean out data
-// beforeEach(createData);
+// before each test, clean out data
+beforeEach(createData);
 
-// afterAll(async () => {
-//   await db.end()
-// })
+afterAll(async () => {
+  await db.end()
+})
 
-// describe("GET /", function () {
+describe("GET /", function () {
 
-//   test("It should respond with array of invoices", async function () {
-//     const response = await request(app).get("/invoices");
-//     expect(response.body).toEqual({
-//       "invoices": [
-//         {
-//           "id": 1,
-//           "comp_code": "apple",
-//           "amt": 100,
-//           "paid": false,
-//         },
-//         {
-//           "id": 2,
-//           "comp_code": "apple",
-//           "amt": 200,
-//           "paid": true,
-//         },
-//         {
-//           "id": 3,
-//           "comp_code": "ibm",
-//           "amt": 300,
-//           "paid": false,
-//         },
-//       ]
-//     });
-//   })
+  test("It should respond with array of industries", async function () {
+    const response = await request(app).get("/industries");
+    expect(response.body).toEqual({
+      "industries": [
+        {
+          "title": "Consumer Electronics",
+          "code": "apple"
+        },
+        {
+          "title": "Hardware",
+          "code": "apple"
+        },
+        {
+          "title": "Hardware",
+          "code": "ibm"
+        },
+        {
+          "title": "Machine Learning",
+          "code": "ibm"
+        },
+        {
+          "title": "Software",
+          "code": "apple"
+        },
+        {
+          "title": "Software",
+          "code": "ibm"
+        }
+      ]
+    });
+  });
 
-// });
 
+describe("GET /ce", function () {
 
-// describe("GET /1", function () {
+  test("It return company info", async function () {
+    const response = await request(app).get("/industries/ce");
+    expect(response.body).toEqual(
+      {
+        "company": {
+          "code": "apple",
+          "name": "Apple",
+          "description": "Maker of OSX.",
+          "invoices": [
+            {
+              "id": 1
+            },
+            {
+              "id": 2
+            }
+          ],
+          "industries": [
+            "Consumer Electronics",
+            "Hardware",
+            "Software"
+          ]
+        }
+      }
+    );
+  });
 
-//   test("It return invoice info", async function () {
-//     const response = await request(app).get("/invoices/1");
-//     expect(response.body).toEqual(
-//       {
-//         "invoice": {
-//           "id": 1,
-//           "company": {
-//             "code": "apple",
-//             "name": "Apple",
-//             "description": "Maker of OSX."
-//           },
-//           "amt": 100,
-//           "paid": false,
-//           "add_date": "2021-07-03T17:00:00.000Z",
-//           "paid_date": null
-//         }
-//       }
-//     );
-//   });
-
-//   test("It should return 404 for no-such-invoice", async function () {
-//     const response = await request(app).get("/invoices/999");
+//   test("It should return 404 for no-such-company", async function () {
+//     const response = await request(app).get("/companies/blargh");
 //     expect(response.status).toEqual(404);
 //   })
 // });
@@ -75,80 +85,75 @@
 
 // describe("POST /", function () {
 
-//   test("It should add invoice", async function () {
+//   test("It should add company", async function () {
 //     const response = await request(app)
-//       .post("/invoices")
-//       .send({ amt: 400, comp_code: 'ibm' });
+//       .post("/companies")
+//       .send({ name: "TacoTime", description: "Yum!" });
 
 //     expect(response.body).toEqual(
 //       {
-//         "invoice": {
-//           "id": 4,
-//           "comp_code": "ibm",
-//           "amt": 400,
-//           "paid": false,
-//           "add_date": "2021-07-04T17:00:00.000Z",
-//           "paid_date": null
+//         "company": {
+//           code: "tacotime",
+//           name: "TacoTime",
+//           description: "Yum!",
 //         }
 //       }
 //     );
 //   });
+
+//   test("It should return 500 for conflict", async function () {
+//     const response = await request(app)
+//       .post("/companies")
+//       .send({ name: "Apple", description: "Huh?" });
+
+//     expect(response.status).toEqual(500);
+//   })
 // });
 
 
 // describe("PUT /", function () {
 
-//   test("It should update an invoice", async function () {
+//   test("It should update company", async function () {
 //     const response = await request(app)
-//       .put("/invoices/1")
-//       .send({ amt: 1000, paid: false });
+//       .put("/companies/apple")
+//       .send({ name: "AppleEdit", description: "NewDescrip" });
 
 //     expect(response.body).toEqual(
 //       {
-//         "invoice": {
-//           "id": 1,
-//           "comp_code": "apple",
-//           "amt": 1000,
-//           "paid": false,
-//           "add_date": "2021-07-03T17:00:00.000Z",
-//           "paid_date": null
+//         "company": {
+//           code: "apple",
+//           name: "AppleEdit",
+//           description: "NewDescrip",
 //         }
 //       }
 //     );
 //   });
 
-//   test("It should return 404 for no-such-invoice", async function () {
-//     const response = await request(app)
-//       .put("/invoices/9999")
-//       .send({ amt: 1000 });
-
-//     expect(response.status).toEqual(404);
-//   });
-
 //   test("It should return 400 for missing data", async function () {
 //     const response = await request(app)
-//       .put("/invoices/1")
-//       .send({});
+//         .put("/companies/blargh")
+//         .send({name: "Blargh"});
 
 //     expect(response.status).toEqual(400);
-//   })
+//   });
+
 // });
 
 
 // describe("DELETE /", function () {
 
-//   test("It should delete invoice", async function () {
+//   test("It should delete company", async function () {
 //     const response = await request(app)
-//         .delete("/invoices/1");
+//         .delete("/companies/apple");
 
-//     expect(response.body).toEqual({ msg: `Deleted Invoice: 1` });
+//     expect(response.body).toEqual({ msg: `Deleted Company: apple` });
 //   });
 
-//   test("It should return 404 for no-such-invoices", async function () {
+//   test("It should return 404 for no-such-comp", async function () {
 //     const response = await request(app)
-//         .delete("/invoices/999");
+//         .delete("/companies/blargh");
 
 //     expect(response.status).toEqual(404);
 //   });
-// });
+});
 
